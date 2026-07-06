@@ -1,0 +1,427 @@
+{
+  "_template": true,
+  "_templateVersion": "1.0.0",
+  "_instructions": "This is a locale-agnostic starter template for an eviction/tenancy defense navigator. Fork this file, replace every value marked with [REPLACE] with your jurisdiction's actual information, and remove all '_' prefixed keys before publishing. See README.md for a full authoring guide.",
+
+  "version": "0.1.0",
+  "publishedAt": "[REPLACE: ISO date, e.g. 2026-01-01]",
+  "domain": "eviction-defense",
+  "jurisdiction": "[REPLACE: ISO 3166 code, e.g. US-NY-NYC, GB-ENG-LDN, KE-NBO, ZA-WC]",
+  "language": "[REPLACE: BCP 47 language tag, e.g. en, es, fr, sw, pt-BR]",
+  "entryNode": "start",
+
+  "civicData": {
+    "_note": "All values here become available as {{placeholders}} in node text and item text. Add as many fields as your jurisdiction needs.",
+
+    "jurisdiction_name": "[REPLACE: Human-readable name, e.g. 'Nairobi, Kenya' or 'England and Wales']",
+    "primary_statute": "[REPLACE: The main tenancy/housing statute, e.g. 'Landlord and Tenant Act 1985 (UK)' or 'Residential Tenancies Act 2004 (Ireland)']",
+    "notice_days_nonpayment": "[REPLACE: Days tenant has to pay rent before landlord can file, e.g. '7']",
+    "notice_days_violation": "[REPLACE: Days tenant has to fix a lease violation, e.g. '14']",
+    "hearing_window_days": "[REPLACE: Typical days between filing and hearing, e.g. '14-21']",
+    "appeal_days": "[REPLACE: Days after judgment to file an appeal, e.g. '10']",
+    "court_name": "[REPLACE: Name of the court that handles residential evictions]",
+    "court_address": "[REPLACE: Full street address of the eviction court]",
+    "court_phone": "[REPLACE: Court phone number]",
+    "legal_aid_name": "[REPLACE: Primary free legal aid organization name]",
+    "legal_aid_phone": "[REPLACE: Legal aid phone number]",
+    "legal_aid_url": "[REPLACE: Legal aid website URL]",
+    "legal_aid_eligibility": "[REPLACE: Who qualifies, e.g. 'Households below 125% of federal poverty level']",
+    "emergency_housing_phone": "[REPLACE: Emergency housing or homeless prevention hotline]",
+    "rental_assistance_url": "[REPLACE: URL to apply for emergency rental assistance, if available]",
+    "selfhelp_url": "[REPLACE: Court or government self-help resource URL]"
+  },
+
+  "nodes": {
+    "start": {
+      "_note": "Entry point. Tenant describes their situation. Adjust option labels to match local terminology.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 1 — Understand Your Situation']",
+      "text": "[REPLACE: Opening question in plain language, e.g. 'What have you received from your landlord or the court?']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'A written notice from my landlord']",
+          "value": "notice",
+          "setsFlag": "stage",
+          "next": "notice_type"
+        },
+        {
+          "label": "[REPLACE: e.g. 'Court papers scheduling a hearing']",
+          "value": "court",
+          "setsFlag": "stage",
+          "next": "court_received"
+        },
+        {
+          "label": "[REPLACE: e.g. 'Nothing yet — I am worried about falling behind on rent']",
+          "value": "preemptive",
+          "setsFlag": "stage",
+          "next": "preemptive_advice"
+        }
+      ]
+    },
+
+    "notice_type": {
+      "_note": "Branch on type of notice received. Add or remove options to match notice types in your jurisdiction.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 1 — Understand Your Notice']",
+      "text": "[REPLACE: e.g. 'What does your notice say?']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'Pay rent within {{notice_days_nonpayment}} days or vacate']",
+          "value": "pay",
+          "setsFlag": "noticeType",
+          "next": "notice_pay"
+        },
+        {
+          "label": "[REPLACE: e.g. 'Fix a lease violation or vacate']",
+          "value": "violation",
+          "setsFlag": "noticeType",
+          "next": "notice_violation"
+        },
+        {
+          "label": "[REPLACE: e.g. 'Vacate — no reason given']",
+          "value": "no_cause",
+          "setsFlag": "noticeType",
+          "next": "notice_no_cause"
+        },
+        {
+          "label": "[REPLACE: e.g. 'I am not sure what it says']",
+          "value": "unknown",
+          "setsFlag": "noticeType",
+          "next": "get_help_now"
+        }
+      ]
+    },
+
+    "notice_pay": {
+      "_note": "Nonpayment notice. Surface the deadline and ask if tenant can pay.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 1 — Rent Arrears Notice']",
+      "text": "[REPLACE: e.g. 'You have {{notice_days_nonpayment}} days to pay all rent owed under {{primary_statute}}. Can you pay in full?']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'Yes — I can pay in full']",
+          "value": "yes",
+          "setsFlag": "canPay",
+          "next": "checklist_pay_now"
+        },
+        {
+          "label": "[REPLACE: e.g. 'No — I cannot pay in full']",
+          "value": "no",
+          "setsFlag": "canPay",
+          "next": "defenses_check"
+        },
+        {
+          "label": "[REPLACE: e.g. 'I may qualify for housing assistance']",
+          "value": "assistance",
+          "setsFlag": "canPay",
+          "next": "rental_assistance_check"
+        }
+      ]
+    },
+
+    "notice_violation": {
+      "_note": "Lease violation notice. Ask if tenant can cure it.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 1 — Lease Violation Notice']",
+      "text": "[REPLACE: e.g. 'Can you fix the lease violation within {{notice_days_violation}} days?']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'Yes — I can fix it']",
+          "value": "yes",
+          "setsFlag": "canCure",
+          "next": "checklist_cure"
+        },
+        {
+          "label": "[REPLACE: e.g. 'No — or I dispute the violation']",
+          "value": "no",
+          "setsFlag": "canCure",
+          "next": "defenses_check"
+        }
+      ]
+    },
+
+    "notice_no_cause": {
+      "_note": "No-cause or no-fault notice. Surface any just-cause protections that exist in this jurisdiction.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Step 1 — No-Cause Notice']",
+      "items": [
+        {
+          "text": "[REPLACE: Explain what a no-cause notice means in this jurisdiction and whether just-cause protections apply.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: If retaliation protections exist, mention them here — e.g. eviction following a complaint to authorities may be unlawful.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: Direct to legal aid, e.g. 'Call {{legal_aid_name}} for a free case evaluation: {{legal_aid_phone}}']",
+          "link": "tel:{{legal_aid_phone}}",
+          "urgent": true
+        }
+      ]
+    },
+
+    "defenses_check": {
+      "_note": "Habitability / repair defense. Adjust statute reference and description for local law.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 1 — Your Defenses']",
+      "text": "[REPLACE: e.g. 'Has your landlord failed to make necessary repairs after you notified them in writing? Tenants may have a habitability defense under {{primary_statute}}.']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'Yes — I reported defects and they were not fixed']",
+          "value": "yes",
+          "setsFlag": "habitabilityDefense",
+          "next": "retaliation_check"
+        },
+        {
+          "label": "[REPLACE: e.g. 'No']",
+          "value": "no",
+          "setsFlag": "habitabilityDefense",
+          "next": "retaliation_check"
+        }
+      ]
+    },
+
+    "retaliation_check": {
+      "_note": "Retaliation defense. Remove this node if retaliation protections do not exist in this jurisdiction.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 1 — Retaliation Defense']",
+      "text": "[REPLACE: e.g. 'Did you recently complain to a government agency or assert your legal rights — and did this eviction follow shortly after?']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'Yes — eviction followed my complaint']",
+          "value": "yes",
+          "setsFlag": "retaliationDefense",
+          "next": "rental_assistance_check"
+        },
+        {
+          "label": "[REPLACE: e.g. 'No']",
+          "value": "no",
+          "setsFlag": "retaliationDefense",
+          "next": "rental_assistance_check"
+        }
+      ]
+    },
+
+    "rental_assistance_check": {
+      "_note": "Only include if rental assistance programs exist in this jurisdiction. Otherwise route directly to checklist_main.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 1 — Emergency Assistance']",
+      "text": "[REPLACE: e.g. 'Have you applied for emergency housing assistance?']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'Yes — application is pending']",
+          "value": "pending",
+          "setsFlag": "assistancePending",
+          "next": "checklist_main"
+        },
+        {
+          "label": "[REPLACE: e.g. 'No — I have not applied yet']",
+          "value": "no",
+          "setsFlag": "assistancePending",
+          "next": "checklist_apply_assistance"
+        }
+      ]
+    },
+
+    "court_received": {
+      "_note": "Tenant has already been served court papers. Urgency node — surface hearing date and key deadlines immediately.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Step 2 — Court Papers Received']",
+      "text": "[REPLACE: e.g. 'Court papers mean your landlord has filed. Hearings are typically scheduled within {{hearing_window_days}} days. Do you know your hearing date?']",
+      "options": [
+        {
+          "label": "[REPLACE: e.g. 'Yes — I know my hearing date']",
+          "value": "yes",
+          "setsFlag": "knowsHearing",
+          "next": "defenses_check"
+        },
+        {
+          "label": "[REPLACE: e.g. 'No — it is not clear on the papers']",
+          "value": "no",
+          "setsFlag": "knowsHearing",
+          "next": "find_hearing_date"
+        }
+      ]
+    },
+
+    "find_hearing_date": {
+      "_note": "Tenant does not know their hearing date. Direct to court immediately.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Step 2 — Find Your Hearing Date']",
+      "items": [
+        {
+          "text": "[REPLACE: e.g. 'Call {{court_name}} immediately to confirm your hearing date and time: {{court_phone}}']",
+          "link": "tel:{{court_phone}}",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Court address: {{court_address}}']",
+          "urgent": false
+        },
+        {
+          "text": "[REPLACE: e.g. 'Missing your hearing results in automatic judgment against you — even if you have valid defenses.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Call {{legal_aid_name}} for same-day help: {{legal_aid_phone}}']",
+          "link": "tel:{{legal_aid_phone}}",
+          "urgent": true
+        }
+      ]
+    },
+
+    "preemptive_advice": {
+      "_note": "Tenant has not yet received a notice but is worried. Preventive guidance.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Before You Receive Notice']",
+      "items": [
+        {
+          "text": "[REPLACE: e.g. 'Contact your landlord in writing immediately. A written payment plan offer can sometimes prevent a court filing.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Apply for emergency housing assistance TODAY.']",
+          "urgent": true,
+          "link": "{{rental_assistance_url}}"
+        },
+        {
+          "text": "[REPLACE: e.g. 'Call {{legal_aid_name}} for free advice: {{legal_aid_phone}}']",
+          "link": "tel:{{legal_aid_phone}}",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Save all written communications with your landlord.']",
+          "urgent": false
+        }
+      ]
+    },
+
+    "get_help_now": {
+      "_note": "Tenant cannot identify their notice type. Route to legal aid immediately.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Get Help Reading Your Notice']",
+      "items": [
+        {
+          "text": "[REPLACE: e.g. 'Call {{legal_aid_name}} immediately — free legal help: {{legal_aid_phone}}']",
+          "link": "tel:{{legal_aid_phone}}",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Do not ignore any notice. Eviction timelines move quickly in {{jurisdiction_name}}.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Self-help resources: {{selfhelp_url}}']",
+          "link": "{{selfhelp_url}}",
+          "urgent": false
+        }
+      ]
+    },
+
+    "checklist_pay_now": {
+      "_note": "Tenant can pay. Action checklist to stop eviction by paying.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Action: Pay Rent to Stop Eviction']",
+      "items": [
+        {
+          "text": "[REPLACE: e.g. 'Pay the full rent owed within {{notice_days_nonpayment}} days of the notice date under {{primary_statute}}.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Pay by traceable method — money order, bank transfer, or receipt-generating method. Keep proof.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Get written confirmation from your landlord that the debt is satisfied.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'If your landlord refuses payment or files in court anyway, call {{legal_aid_name}}: {{legal_aid_phone}}']",
+          "link": "tel:{{legal_aid_phone}}",
+          "urgent": true
+        }
+      ]
+    },
+
+    "checklist_cure": {
+      "_note": "Tenant can fix the lease violation. Action checklist.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Action: Fix the Lease Violation']",
+      "items": [
+        {
+          "text": "[REPLACE: e.g. 'Fix the violation within {{notice_days_violation}} days and document it with photos, receipts, and dated records.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Notify your landlord in writing that the violation has been cured — keep a paper trail.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'If your landlord files in court after you cured, that is a defense.']",
+          "urgent": false
+        }
+      ]
+    },
+
+    "checklist_apply_assistance": {
+      "_note": "Tenant has not applied for rental assistance. Direct them to apply.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Action: Apply for Emergency Assistance']",
+      "items": [
+        {
+          "text": "[REPLACE: e.g. 'Apply for emergency housing assistance immediately — do not wait.']",
+          "urgent": true,
+          "link": "{{rental_assistance_url}}"
+        },
+        {
+          "text": "[REPLACE: e.g. 'Notify your landlord in writing that your application is pending.']",
+          "urgent": false
+        },
+        {
+          "text": "[REPLACE: e.g. 'Call {{legal_aid_name}} for free legal help: {{legal_aid_phone}}']",
+          "link": "tel:{{legal_aid_phone}}",
+          "urgent": true
+        }
+      ]
+    },
+
+    "checklist_main": {
+      "_note": "Full action checklist for tenants facing a hearing. This is the most important terminal node. Customize urgency and text for your jurisdiction's specific traps and deadlines.",
+      "type": "terminal",
+      "phase": "[REPLACE: e.g. 'Your Full Action Checklist']",
+      "items": [
+        {
+          "text": "[REPLACE: Most urgent action — e.g. 'URGENT: Appear at your {{court_name}} hearing. Missing it means automatic judgment against you.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Court: {{court_address}}']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Bring to court: your lease, rent receipts, written repair requests, and all landlord communications.']",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: Add any jurisdiction-specific procedural trap here — e.g. court registry deposits, answer filing deadlines, mandatory mediation.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'If the judge rules against you, you have {{appeal_days}} days to file an appeal.']",
+          "urgent": false
+        },
+        {
+          "text": "[REPLACE: e.g. 'Call {{legal_aid_name}} for free representation: {{legal_aid_phone}}']",
+          "link": "tel:{{legal_aid_phone}}",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: e.g. 'Self-help resources: {{selfhelp_url}}']",
+          "link": "{{selfhelp_url}}",
+          "urgent": false
+        }
+      ]
+    }
+  }
+}
