@@ -52,7 +52,10 @@ Replace every `[REPLACE: ...]` value with your jurisdiction's actual information
 
 Add as many custom fields as your jurisdiction needs. If your jurisdiction has a unique procedural requirement (like a court registry deposit, a mandatory mediation step, or a rental license requirement), add a field for it and reference it in your node text.
 
+---
+
 ## Step 3 — Customize the nodes
+
 Nodes are the questions and checklists tenants see. The template includes the standard node set:
 
 Node	Purpose
@@ -82,7 +85,10 @@ question — shows buttons, routes tenant to next node based on their answer
 terminal — shows an action checklist, ends the flow
 branch — silent routing node based on flags set earlier (no UI shown)
 
+---
+
 ## Step 4 — Translate
+
 Replace all English text in phase, text, label, and items[].text with your language. The engine renders whatever text is in the bundle — no code changes needed.
 
 Set the language field at the top of the bundle to your BCP 47 language tag (e.g. "sw" for Swahili, "pt-BR" for Brazilian Portuguese, "ar" for Arabic).
@@ -98,10 +104,14 @@ _instructions
 All _note keys inside nodes
 These are authoring aids, not part of the bundle schema.
 
+---
+
 ## Step 6 — Validate
 Run the bundle through the schema validator:
 npx ajv validate -s civic-engine/packages/schema/src/bundle.schema.json \
   -d civic-engine/bundles/YOUR-BUNDLE/rules/index.json
+
+---
 
 ## Step 7 — Deploy
 The simplest deployment: add your bundle to the CIXCultural/courtnav repository and open a pull request. Once merged, it is live.
@@ -124,6 +134,7 @@ cp -r your-bundle civic-engine/bundles/
 # Or pin to IPFS (censorship-resistant, free)
 ./civic-engine/deploy.sh ipfs
 
+---
 Bundle schema reference
 Full schema: civic-engine/packages/schema/src/bundle.schema.json
 
@@ -150,16 +161,21 @@ items	array	terminal	Checklist items
 conditions	array	branch	Routing conditions
 effectiveAfter	string	all	ISO date — node only shown after this date
 effectiveBefore	string	all	ISO date — node only shown before this date
-Examples
+
+---
+
+## Examples
 Completed bundles you can learn from:
 
 civic-engine/bundles/nyc-housing-demo/ — New York City (complex, multi-path)
 civic-engine/bundles/florida-eviction-defense/ — Florida (simple statute, critical procedural trap)
 civic-engine/bundles/maryland-baltimore-eviction-defense/ — Baltimore (rental license defense)
 civic-engine/bundles/pennsylvania-philly-eviction-defense/ — Philadelphia (mandatory mediation, right to counsel)
+---
 Get help
 Open an issue on GitHub: github.com/CIXCultural/courtnav/issues
-Read the full authoring guide: civic-engine/CONTRIBUTING.md
-Email: [REPLACE with CIX Cultural contact email]
+Read the full authoring guide: Civic_Engine/CONTRIBUTING.md
+Email: studio@cixcultural.org
+---
 License
 MIT — free to use, fork, translate, and deploy for any community purpose.
