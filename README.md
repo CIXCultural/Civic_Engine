@@ -29,7 +29,7 @@ No programming knowledge required.
 Copy `index.json` from this directory into a new folder:
 
 ```
-civic-engine/bundles/YOUR-JURISDICTION-eviction-defense/rules/index.json
+Civic_Engine/bundles/YOUR-JURISDICTION-eviction-defense/rules/index.json
 ```
 
 Naming convention: `[country-region-city]-eviction-defense`
