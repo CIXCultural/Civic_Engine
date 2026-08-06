@@ -38,10 +38,10 @@ civic-engine/
 3. Point a new `examples/<your-app>/index.html` at your bundle URL
 4. No engine code changes required
 
-## Relationship to CourtnAv
+## Relationship to CourtMotion
 
 `bundles/nyc-housing-demo` is a white-label reimplementation of the NYC Housing Court appeals
-domain for demonstration purposes. CourtnAv (the production app in `/api` and `/public`) is
+domain for demonstration purposes. CourtMotion (the production app in `/api` and `/public`) is
 **not modified** and shares no source code with this platform.
 
 ## Benchmark Results
