@@ -1,6 +1,7 @@
 # Civic Engine
 
-A local-first runtime for enterprise-grade legal logic and civic data.  
+Civic rules are typically trapped in documents, websites, and custom applications. Civic Engine separates policy logic from application code by representing civic knowledge as portable, versioned rule bundles that can run across jurisdictions. It provides a local-first runtime for executable civic knowledge and legal logic.
+
 Zero backend. Works offline. Runs multi-column queries in under 2 seconds on legacy hardware.
 
 ---
