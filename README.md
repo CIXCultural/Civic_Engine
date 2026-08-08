@@ -209,6 +209,9 @@ domain for demonstration purposes. CourtMotion (the production app in `/api` and
 
 ## Benchmark Results
 
+Benchmark figures below measure the pure-JS query path (the same path DuckDB-WASM falls back to when unavailable). 
+DuckDB-WASM benchmarks have not yet been separately measured — see [issue/TODO].
+
 Measured on Node 22 (conservative proxy for a mid-range 2019 smartphone browser).
 Dataset: 200,000 rows, 12.2 MB CSV (synthetic census/voter registry scale).
 
