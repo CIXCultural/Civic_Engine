@@ -17,7 +17,21 @@ Applications are authored primarily as data rather than application code. A bund
 
 The Civic Engine runtime evaluates the bundle and the generic UI shell renders the resulting navigation.
 
-This separation allows organizations to create new civic applications without modifying the underlying engine.
+This separation allows organizations to create new civic applications without modifying the underlying engine, and 
+by understanding that using Civic Engine can be distilled into 10 steps:
+
+1. Choose your domain: Select the specific civic or public-interest area.
+2. Copy the template: Start with a fresh, pre-configured bundle template.
+3. Define your jurisdiction: Specify the target geographic or administrative area.
+4. Add your civic data: Input the required jurisdiction-specific regulations and facts.
+5. Create your questions: Draft the queries that users will see.
+6. Define the possible answers: Establish the valid response choices for users.
+7. Connect nodes: Link each answer to its respective next node.
+8. Create the checklist: Build the final action list for terminal screens.
+9. Validate the bundle: Run checks to ensure data integrity and flow.
+10. Publish it: Deploy the validated bundle to the runtime engine.
+
+Civic applications are created by authoring a bundle, not rewriting software.
 
 ---
 
