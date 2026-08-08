@@ -7,8 +7,12 @@
  *   3. Multi-column filter + sort query
  *   4. Geo bounding-box query
  *
- * Run with: node --experimental-vm-modules bench/benchmark.js [rows]
- * Default: 200,000 rows (realistic census block file size ~18 MB CSV)
+ * Run with: node packages/engine/bench/benchmark.js [rows]
+ * Default: 200,000 rows (realistic census block file size ~12 MB CSV)
+ *
+ * Note: this exercises the pure-JS fallback path (StreamParser + in-memory
+ * query), the same path used when DuckDB-WASM is unavailable. It does not
+ * benchmark DuckDB-WASM itself — that requires a browser environment.
  */
 
 import { writeFileSync, unlinkSync } from 'fs';
@@ -42,8 +46,28 @@ function generateCsv(rows) {
 async function ingestCsv(csvPath) {
   const { StreamParser } = await import('../src/parser.js');
   const parser = new StreamParser();
-  // Use file:// URL so fetch works in Node with --experimental-fetch
-  return parser.ingest(new URL(`file://${csvPath}`));
+
+  // Node's built-in fetch does not support file:// URLs (as of this
+  // writing it throws "not implemented... yet"), so serve the temp CSV
+  // over a real local HTTP connection instead — this keeps parser.js
+  // itself using plain fetch(), matching how it behaves in the browser.
+  const { createServer } = await import('http');
+  const { readFileSync } = await import('fs');
+  const csvData = readFileSync(csvPath);
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/csv', 'Content-Length': csvData.length });
+    res.end(csvData);
+  });
+
+  await new Promise(resolve => server.listen(0, resolve));
+  const port = server.address().port;
+
+  try {
+    return await parser.ingest(`http://127.0.0.1:${port}/data.csv`);
+  } finally {
+    server.close();
+  }
 }
 
 // ── Query runner (pure-JS path, same as DuckDB fallback) ─────────────────────
