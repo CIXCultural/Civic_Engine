@@ -1,0 +1,47 @@
+```json
+{
+  "_template": true,
+  "_templateVersion": "1.0.0",
+  "_instructions": "Replace all [REPLACE] values with jurisdiction-specific information. The structure is illustrative and should be adapted to the court hierarchy and filing procedures of the target jurisdiction. Remove underscore-prefixed metadata before publishing.",
+
+  "appellate_courts": {
+    "court_1": {
+      "name": "[REPLACE: Name of appellate court or tribunal]",
+      "address": "[REPLACE: Physical or mailing address]",
+      "jurisdictions": [
+        "[REPLACE: Geographic area, district, county, borough, or other jurisdiction]"
+      ],
+      "filingHours": "[REPLACE: Filing hours, if applicable]",
+      "phone": "[REPLACE: Court phone number]",
+      "filingUrl": "[REPLACE: Official electronic filing URL, if applicable]"
+    },
+
+    "court_2": {
+      "name": "[REPLACE: Name of another appellate court or tribunal]",
+      "address": "[REPLACE: Physical or mailing address]",
+      "jurisdictions": [
+        "[REPLACE: Geographic area, district, county, borough, or other jurisdiction]"
+      ],
+      "filingHours": "[REPLACE: Filing hours, if applicable]",
+      "phone": "[REPLACE: Court phone number]",
+      "filingUrl": "[REPLACE: Official electronic filing URL, if applicable]"
+    }
+  },
+
+  "trial_courts": {
+    "location_1": {
+      "name": "[REPLACE: Name of trial or lower court]",
+      "address": "[REPLACE: Court address]",
+      "clerkPhone": "[REPLACE: Clerk phone number]",
+      "website": "[REPLACE: Official court website]"
+    },
+
+    "location_2": {
+      "name": "[REPLACE: Name of trial or lower court]",
+      "address": "[REPLACE: Court address]",
+      "clerkPhone": "[REPLACE: Clerk phone number]",
+      "website": "[REPLACE: Official court website]"
+    }
+  }
+}
+```
