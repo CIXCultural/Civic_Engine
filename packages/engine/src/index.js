@@ -379,4 +379,4 @@ export function terminateWorker() {
 
   pending.clear();
 }
-```
+
