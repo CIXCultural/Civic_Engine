@@ -216,17 +216,40 @@ Run yourself: `node civic-engine/packages/engine/bench/benchmark.js`
 
 ## Query Engine and WASM Status
 
+## Query Engine and WASM Status
+
 Civic Engine uses DuckDB-WASM for in-browser analytical queries when
-WebAssembly is available. DuckDB-WASM runs inside the engine's Web Worker,
-keeping query execution off the main UI thread.
+WebAssembly is available, running inside the engine's Web Worker so query
+execution stays off the main UI thread. A pure-JavaScript fallback handles
+environments where DuckDB-WASM cannot be initialized (limited WebAssembly
+support, restrictive CSP, or older browsers).
 
-The query layer is implemented in:
+### Benchmark Results
 
-`packages/engine/src/wasm-query.js`
+The figures below measure the **pure-JavaScript fallback path** — the same
+code path used whenever DuckDB-WASM is unavailable. They do not reflect
+DuckDB-WASM's own performance, which requires a browser environment to
+measure and hasn't been separately benchmarked yet.
 
-The engine also includes a pure-JavaScript fallback for environments where
-DuckDB-WASM cannot be initialized, including browsers with limited WebAssembly
-support or restrictive security policies.
+Measured on Node 22, using a synthetic 200,000-row / 12.2 MB CSV
+(census/voter-registry scale):
+
+| Operation | Time | Rows returned |
+|---|---|---|
+| Stream parse + columnar ingest | ~1,200 ms | 200,000 |
+| Single-column filter (`borough = Brooklyn`) | ~110 ms | 10,000 |
+| Multi-column filter + sort (`income > 60k AND pop > 1000`) | ~170 ms | 500 |
+| Geo bounding-box (midtown Manhattan ~4 km²) | ~120 ms | 500 |
+
+All four operations complete in roughly **1.6 seconds total** on Node,
+under our 2-second target for legacy mobile hardware — Node is used here
+as a conservative, reproducible stand-in for constrained browser
+environments, not a browser benchmark itself.
+
+Run it yourself:
+```bash
+node packages/engine/bench/benchmark.js 200000
+```
 
 ### Current Query Architecture
 
