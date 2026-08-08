@@ -1,159 +1,493 @@
 /**
  * MemoryGuard — best-effort session state clearing.
  *
- * Registers listeners for tab close/navigation and background transitions.
- * On a termination signal, it:
- *   1. Overwrites all registered state objects in place, then drops the
- *      reference, so purged data is no longer reachable from application
- *      state
- *   2. Removes all registered localStorage keys
- *   3. Calls registered purge callbacks (e.g. to terminate workers)
+ * Registers listeners for tab close/navigation and background
+ * transitions.
  *
- * IMPORTANT — what this does and does not guarantee:
- * This is a best-effort mitigation, not a cryptographic or forensic
- * guarantee. JavaScript strings are immutable: "overwriting" a string
- * creates a new string and reassigns the reference, but it does not
- * physically overwrite the original data in memory. Engine-level copies
- * (JIT compilation, string interning, GC compaction) may leave residual
- * data in memory this code has no access to, and garbage collection timing
- * is not controllable from application code. This reduces the window and
- * surface area of exposure (so data is no longer reachable from app state,
- * localStorage is cleared, workers are torn down) but it does not defeat
- * a determined attacker with memory-inspection access to the device.
+ * On a purge signal, it:
+ *
+ * 1. Recursively clears registered state objects in place, then
+ *    drops the references held by the application container.
+ *
+ * 2. Removes registered localStorage keys.
+ *
+ * 3. Calls registered purge callbacks, such as worker termination.
+ *
+ * IMPORTANT — limitations:
+ *
+ * This is a best-effort data-minimization mechanism. It is NOT a
+ * cryptographic erasure mechanism and does not provide a forensic
+ * guarantee.
+ *
+ * JavaScript strings are immutable. Assigning a new value does not
+ * physically overwrite the previous string in memory. JavaScript
+ * engines may also maintain copies through JIT compilation, string
+ * interning, garbage collection, memory compaction, browser
+ * snapshots, or other implementation details outside application
+ * control.
+ *
+ * Therefore, MemoryGuard cannot guarantee that sensitive data has
+ * been physically erased from device memory.
+ *
+ * What it DOES accomplish:
+ *
+ * - Removes sensitive objects from reachable application state.
+ * - Removes registered localStorage entries.
+ * - Invokes registered cleanup callbacks.
+ * - Can terminate workers and other application resources.
+ * - Reduces the amount of sensitive data retained by the application.
+ *
+ * What it DOES NOT accomplish:
+ *
+ * - Guaranteed physical memory erasure.
+ * - Protection against a compromised browser or operating system.
+ * - Protection against browser/device memory inspection.
+ * - Guaranteed execution of JavaScript during every form of
+ *   browser/process termination.
  *
  * Usage:
+ *
  *   import { MemoryGuard } from './memory-guard.js';
- *   const guard = new MemoryGuard({ hiddenPurgeDelayMs: 5 * 60 * 1000 });
- *   guard.trackState(stateRef, 'sessionState');
- *   guard.trackStorage('ce_miami_state');
+ *
+ *   const guard = new MemoryGuard({
+ *     hiddenPurgeDelayMs: 5 * 60 * 1000
+ *   });
+ *
+ *   guard.trackState(ctx, 'sessionState');
+ *   guard.trackStorage('civic_session_state');
  *   guard.onPurge(() => worker.terminate());
+ *
+ *   // Manual purge:
+ *   guard.purgeNow();
+ *
+ *   // When the application no longer needs the guard:
+ *   guard.destroy();
  */
+
 export class MemoryGuard {
   /**
    * @param {Object} [options]
-   * @param {number} [options.hiddenPurgeDelayMs] - How long to wait after
-   *   the tab is backgrounded (visibilitychange -> 'hidden') before purging.
-   *   Defaults to 0 (immediate). Set higher for multi-step intake flows
-   *   where a user briefly switching apps shouldn't wipe their progress —
-   *   e.g. 5 minutes. The timer is cancelled if the tab becomes visible
-   *   again before it fires.
+   * @param {number} [options.hiddenPurgeDelayMs]
+   * How long to wait after the document becomes hidden before
+   * purging.
+   *
+   * Defaults to 0, meaning immediate purge.
+   *
+   * A longer value can be appropriate for multi-step intake
+   * applications where a user may temporarily switch apps.
    */
   constructor(options = {}) {
-    this._stateRefs = [];   // { container: obj, key: string }
-    this._storageKeys = []; // localStorage keys to remove
-    this._callbacks = [];   // arbitrary purge callbacks
-    this._hiddenPurgeDelayMs = options.hiddenPurgeDelayMs ?? 0;
+    // Containers holding references to live application state.
+    //
+    // Each entry has the form:
+    // { container: object, key: string }
+    this._stateRefs = [];
+
+    // localStorage keys that should be removed during purge.
+    this._storageKeys = [];
+
+    // Functions that should execute during purge.
+    //
+    // Examples:
+    // - worker.terminate()
+    // - close database connections
+    // - clear application-specific caches
+    this._callbacks = [];
+
+    // Configure the background purge delay.
+    //
+    // Nullish coalescing allows an explicit 0 value.
+    this._hiddenPurgeDelayMs =
+      options.hiddenPurgeDelayMs ?? 0;
+
+    // Timer used for delayed background purges.
     this._hiddenTimer = null;
 
-    this._bound = this._purge.bind(this);
+    // Prevent multiple purge executions.
+    //
+    // pagehide, beforeunload, and visibilitychange can all produce
+    // termination/background signals, so purge must be idempotent.
+    this._purged = false;
 
-    // pagehide fires reliably on mobile and bfcache-aware browsers when the
-    // tab is actually closing or navigating away — this is the primary,
-    // most trustworthy signal.
-    window.addEventListener('pagehide', this._bound);
+    // Track whether the guard has been destroyed.
+    this._destroyed = false;
 
-    // visibilitychange catches tab backgrounding (e.g. switching apps).
-    // Purge timing here is configurable — see hiddenPurgeDelayMs above —
-    // because an immediate purge on every backgrounding can be too
-    // aggressive for a multi-step form: a user taking a call or checking
-    // a text mid-intake shouldn't lose their progress.
-    document.addEventListener('visibilitychange', this._onVisibility.bind(this));
+    // Store bound event handlers so they can later be removed.
+    this._boundPurge = this._purge.bind(this);
+    this._boundVisibility =
+      this._onVisibility.bind(this);
 
-    // beforeunload is a legacy desktop signal. Support for it is
-    // inconsistent across browsers (notably restricted on mobile Safari)
-    // and it may not fire reliably in all cases — treat it as a
-    // best-effort fallback alongside pagehide, not the primary mechanism.
-    window.addEventListener('beforeunload', this._bound);
+    /**
+     * pagehide is generally preferable to unload because it is
+     * compatible with browsers that use the back-forward cache.
+     *
+     * It is still only a best-effort lifecycle signal.
+     */
+    window.addEventListener(
+      'pagehide',
+      this._boundPurge
+    );
+
+    /**
+     * visibilitychange detects the document becoming hidden.
+     *
+     * This supports the optional delayed background purge.
+     */
+    document.addEventListener(
+      'visibilitychange',
+      this._boundVisibility
+    );
+
+    /**
+     * beforeunload is retained as a legacy fallback.
+     *
+     * It is not treated as a guaranteed termination signal,
+     * especially on mobile browsers.
+     */
+    window.addEventListener(
+      'beforeunload',
+      this._boundPurge
+    );
   }
 
   /**
-   * Register a live state object. The guard keeps a reference to the
-   * container object and the property name so it can clear it in place.
-   * Pass the wrapper object and key, not the value itself:
-   *   guard.trackState(ctx, 'state')  where ctx.state is the state object
+   * Register a live state object.
    *
-   * Note: if container[key] is undefined/null at purge time, it's simply
-   * skipped — this isn't an error, it just means there was nothing to
-   * clear (e.g. the state hadn't been initialized yet).
+   * The guard stores the container and property name rather than
+   * the state value itself.
+   *
+   * Example:
+   *
+   *   guard.trackState(ctx, 'sessionState');
+   *
+   * If ctx.sessionState contains:
+   *
+   *   {
+   *     name: 'Alice',
+   *     answers: {
+   *       address: '...'
+   *     }
+   *   }
+   *
+   * the guard can recursively clear the object during purge.
+   *
+   * @param {Object} container
+   * @param {string} key
+   * @returns {MemoryGuard}
    */
   trackState(container, key) {
-    this._stateRefs.push({ container, key });
+    // Do not accept invalid registrations.
+    if (!container || typeof container !== 'object') {
+      throw new TypeError(
+        'trackState requires an object container'
+      );
+    }
+
+    if (typeof key !== 'string' || !key) {
+      throw new TypeError(
+        'trackState requires a property name'
+      );
+    }
+
+    // Store the reference to the container and property.
+    this._stateRefs.push({
+      container,
+      key
+    });
+
     return this;
   }
 
-  /** Register a localStorage key to remove on purge. */
+  /**
+   * Register a localStorage key to remove during purge.
+   *
+   * @param {string} key
+   * @returns {MemoryGuard}
+   */
   trackStorage(key) {
+    if (typeof key !== 'string' || !key) {
+      throw new TypeError(
+        'trackStorage requires a storage key'
+      );
+    }
+
     this._storageKeys.push(key);
+
     return this;
   }
 
-  /** Register a callback invoked during purge (e.g. worker.terminate). */
+  /**
+   * Register a cleanup callback.
+   *
+   * Examples:
+   *
+   *   guard.onPurge(() => worker.terminate());
+   *
+   *   guard.onPurge(() => database.close());
+   *
+   * @param {Function} fn
+   * @returns {MemoryGuard}
+   */
   onPurge(fn) {
+    if (typeof fn !== 'function') {
+      throw new TypeError(
+        'onPurge requires a function'
+      );
+    }
+
     this._callbacks.push(fn);
+
     return this;
   }
 
-  /** Manually trigger a full purge immediately (e.g. user clicks "End Session"). */
+  /**
+   * Manually trigger an immediate purge.
+   *
+   * This is useful for an explicit "End Session" action.
+   */
   purgeNow() {
+    // Stop any pending delayed purge.
     this._clearHiddenTimer();
+
+    // Execute the same purge path used by lifecycle events.
     this._purge();
   }
 
+  /**
+   * Handle document visibility changes.
+   */
   _onVisibility() {
+    // Ignore events after the guard has been destroyed.
+    if (this._destroyed || this._purged) {
+      return;
+    }
+
     if (document.visibilityState === 'hidden') {
-      if (this._hiddenPurgeDelayMs > 0) {
-        this._hiddenTimer = setTimeout(() => this._purge(), this._hiddenPurgeDelayMs);
-      } else {
+      /**
+       * If no delay was configured, purge immediately.
+       */
+      if (this._hiddenPurgeDelayMs <= 0) {
         this._purge();
+        return;
       }
+
+      /**
+       * Avoid creating multiple timers if several visibility
+       * events occur while the document remains hidden.
+       */
+      this._clearHiddenTimer();
+
+      // Schedule the delayed purge.
+      this._hiddenTimer = setTimeout(() => {
+        this._hiddenTimer = null;
+
+        // Only purge if the document is still hidden.
+        if (
+          document.visibilityState === 'hidden'
+        ) {
+          this._purge();
+        }
+      }, this._hiddenPurgeDelayMs);
     } else {
-      // Tab became visible again before the delay elapsed — cancel the purge.
+      // The document became visible again.
+      //
+      // If the delayed purge has not happened yet, cancel it.
       this._clearHiddenTimer();
     }
   }
 
+  /**
+   * Cancel a pending hidden-state purge.
+   */
   _clearHiddenTimer() {
-    if (this._hiddenTimer) {
+    if (this._hiddenTimer !== null) {
       clearTimeout(this._hiddenTimer);
       this._hiddenTimer = null;
     }
   }
 
+  /**
+   * Execute the complete purge.
+   *
+   * This method is deliberately idempotent. Multiple lifecycle
+   * events can invoke it without causing repeated cleanup work.
+   */
   _purge() {
-    // Clear all tracked state objects, then drop the reference.
+    // Do nothing if the guard has already been destroyed.
+    if (this._destroyed) {
+      return;
+    }
+
+    // Do nothing if the session has already been purged.
+    if (this._purged) {
+      return;
+    }
+
+    // Mark the session as purged immediately.
+    //
+    // This prevents re-entrant purge calls from repeating cleanup.
+    this._purged = true;
+
+    // Cancel any pending delayed purge.
+    this._clearHiddenTimer();
+
+    /**
+     * Clear all registered state objects.
+     *
+     * The state is recursively cleared first, then the containing
+     * property is set to null so the application no longer has
+     * a reference to the state through that property.
+     */
     for (const { container, key } of this._stateRefs) {
-      const obj = container[key];
-      if (obj && typeof obj === 'object') {
-        this._clear(obj);
+      try {
+        const obj = container[key];
+
+        // Recursively clear object properties.
+        if (
+          obj &&
+          typeof obj === 'object'
+        ) {
+          this._clear(obj);
+        }
+
+        // Remove the application's reference.
+        container[key] = null;
+      } catch (_) {
+        // One failed state reference must not prevent the
+        // remaining state from being purged.
       }
-      container[key] = null;
     }
 
-    // Remove localStorage entries.
+    /**
+     * Remove registered localStorage entries.
+     */
     for (const key of this._storageKeys) {
-      try { localStorage.removeItem(key); } catch (_) { /* storage may be unavailable */ }
+      try {
+        localStorage.removeItem(key);
+      } catch (_) {
+        // Storage may be unavailable, blocked, or inaccessible.
+        //
+        // Continue purging the remaining resources.
+      }
     }
 
-    // Run registered callbacks.
+    /**
+     * Execute application-specific cleanup callbacks.
+     *
+     * Each callback is isolated so that one failure does not
+     * prevent the remaining callbacks from executing.
+     */
     for (const fn of this._callbacks) {
-      try { fn(); } catch (_) { /* never let a callback abort the purge chain */ }
+      try {
+        fn();
+      } catch (_) {
+        // Continue the purge chain even if a callback fails.
+      }
+    }
+
+    /**
+     * Release the guard's references to the registered resources.
+     *
+     * This is particularly important for a reusable framework:
+     * the MemoryGuard itself should not become a long-lived holder
+     * of references to sensitive session objects.
+     */
+    this._stateRefs.length = 0;
+    this._storageKeys.length = 0;
+    this._callbacks.length = 0;
+  }
+
+  /**
+   * Recursively clear object properties.
+   *
+   * IMPORTANT:
+   *
+   * This does not guarantee physical memory erasure.
+   * It makes the values unreachable through the registered
+   * application object graph.
+   *
+   * @param {Object} obj
+   */
+  _clear(obj) {
+    // Ignore null and non-object values.
+    if (
+      !obj ||
+      typeof obj !== 'object'
+    ) {
+      return;
+    }
+
+    // Traverse enumerable own properties.
+    for (const key of Object.keys(obj)) {
+      const value = obj[key];
+
+      // Recursively clear nested objects and arrays.
+      if (
+        value &&
+        typeof value === 'object'
+      ) {
+        this._clear(value);
+      }
+
+      /**
+       * Remove the reference from the containing object.
+       *
+       * For primitives, this replaces the value directly.
+       * For objects, the recursive call above first removes
+       * their nested references.
+       */
+      try {
+        obj[key] = null;
+      } catch (_) {
+        // Some objects may expose read-only properties.
+        //
+        // Continue clearing other properties.
+      }
     }
   }
 
   /**
-   * Recursively drop references to nested values before nulling the
-   * container. As noted above, this makes purged data unreachable from
-   * application state — it does not guarantee the underlying memory is
-   * physically overwritten.
+   * Dispose of the MemoryGuard itself.
+   *
+   * This removes event listeners and cancels timers.
+   *
+   * destroy() does NOT automatically purge session data.
+   *
+   * Use purgeNow() when the intention is to erase the current
+   * session, then destroy() if the guard is no longer needed.
    */
-  _clear(obj) {
-    if (!obj || typeof obj !== 'object') return;
-    for (const key of Object.keys(obj)) {
-      const val = obj[key];
-      if (val && typeof val === 'object') {
-        this._clear(val);
-      }
-      obj[key] = null;
+  destroy() {
+    // Avoid repeating destruction.
+    if (this._destroyed) {
+      return;
     }
+
+    // Cancel delayed work.
+    this._clearHiddenTimer();
+
+    // Remove lifecycle listeners.
+    window.removeEventListener(
+      'pagehide',
+      this._boundPurge
+    );
+
+    window.removeEventListener(
+      'beforeunload',
+      this._boundPurge
+    );
+
+    document.removeEventListener(
+      'visibilitychange',
+      this._boundVisibility
+    );
+
+    // Mark the guard as destroyed.
+    this._destroyed = true;
+
+    // Release any remaining references.
+    this._stateRefs.length = 0;
+    this._storageKeys.length = 0;
+    this._callbacks.length = 0;
   }
 }
+```
