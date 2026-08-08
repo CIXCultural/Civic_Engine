@@ -9,21 +9,38 @@ Zero backend. Works offline. Runs multi-column queries in under 2 seconds on leg
 ## Architecture
 
 ```
+## Architecture
+
 civic-engine/
 ├── packages/
-│   ├── engine/       ← Web Worker + stream parser + DuckDB-WASM query layer
-│   ├── schema/       ← JSON Schema for rule bundles + validator
-│   └── ui-shell/     ← Generic navigator UI (no framework)
+│   ├── engine/                    ← Web Worker + stream parser + DuckDB-WASM query layer
+│   ├── schema/                    ← JSON Schema for rule bundles + validator
+│   └── ui-shell/                  ← Generic navigator UI (no framework)
+│
 ├── templates/
-│   └── eviction-defense-template/   ← White-label demo
-│       ├── index.json   ← Declarative decision tree
-│       └── README.md    ← Bundle authoring instructions
+│   └── eviction-defense-template/ ← Reusable bundle authoring template
+│       ├── index.json             ← Declarative decision tree
+│       ├── civic-data.json        ← Jurisdiction-specific data template
+│       └── README.md              ← Template-specific instructions
+│
 ├── bundles/
-│   └── nyc-housing-demo/   ← White-label demo
-│       ├── index.json   ← Declarative decision tree
-│       └── README.md    ← Bundle authoring instructions
-└── examples/
-    └── housing-navigator/  ← Working demo page
+│   └── nyc-housing-demo/          ← Concrete NYC reference implementation
+│       ├── rules/
+│       │   └── index.json         ← NYC-specific decision tree
+│       ├── data/
+│       │   └── courts.json        ← NYC-specific civic data
+│       └── README.md              ← Reference implementation notes
+│
+├── examples/
+│   └── housing-navigator/         ← Working demonstration application
+│       └── README.md
+│
+├── AUTHORING.md                   ← General bundle-authoring guide
+├── PRIVACY.md
+├── SECURITY.md
+├── GOVERNANCE.md
+├── LICENSE
+└── README.md
 ```
 
 ## Four Technical Challenges
