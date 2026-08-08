@@ -4,7 +4,7 @@
  * For CI/authoring tooling, use ajv directly with bundle.schema.json.
  */
 
-import bundleSchema from './bundle.schema.json' with { type: 'json' };
+import bundleSchema from '../bundle.schema.json' with { type: 'json' };
 
 export { bundleSchema };
 
