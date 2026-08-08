@@ -21,7 +21,6 @@
 
   "nodes": {
     "start": {
-      "_note": "Entry point. Ask the user which court or locality has jurisdiction over the case.",
       "type": "question",
       "phase": "[REPLACE: e.g. 'Phase 1 — Preserve Your Appeal']",
       "text": "[REPLACE: Ask which court, locality, or division handled the case.]",
@@ -48,7 +47,6 @@
     },
 
     "judgment_notice": {
-      "_note": "Determine whether the user has received formal notice of the judgment or order.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask whether formal notice of the judgment or order has been served.]",
@@ -69,7 +67,6 @@
     },
 
     "notice_date": {
-      "_note": "Date input demonstrates how an author can collect a date that may affect a later deadline calculation.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask for the date formal notice was served.]",
@@ -79,7 +76,6 @@
     },
 
     "service_method": {
-      "_note": "Determine whether service occurred by a method that changes the applicable deadline.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask how the notice was served.]",
@@ -106,7 +102,6 @@
     },
 
     "deadline_check": {
-      "_note": "Example branch node. The host application or bundle-specific logic must establish deadlineExpired before this node is reached.",
       "type": "branch",
       "conditions": [
         {
@@ -124,7 +119,6 @@
     },
 
     "deadline_expired": {
-      "_note": "Generic expired-deadline outcome. Replace with the actual jurisdiction-specific remedy.",
       "type": "terminal",
       "phase": "[REPLACE: Deadline has passed]",
       "items": [
@@ -146,7 +140,6 @@
     },
 
     "post_judgment_motion": {
-      "_note": "Determine whether another post-judgment proceeding may affect the appeal path.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask whether the user has filed or is considering a post-judgment motion.]",
@@ -173,7 +166,6 @@
     },
 
     "motion_type": {
-      "_note": "Generic motion-type example. Replace options with the motions recognized in the target jurisdiction.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask what type of post-judgment motion was filed.]",
@@ -200,7 +192,6 @@
     },
 
     "motion_warning": {
-      "_note": "Illustrates a jurisdiction-specific procedural warning that should only be retained if legally accurate.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Explain any procedural consequence of the selected motion and ask the user to acknowledge it.]",
@@ -215,7 +206,6 @@
     },
 
     "stay_question": {
-      "_note": "Determine whether the user needs relief preventing enforcement while the appeal is pending.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask whether the user needs a stay or other interim relief while the appeal is pending.]",
@@ -236,7 +226,6 @@
     },
 
     "security_question": {
-      "_note": "Generic example for jurisdictions where a bond, undertaking, deposit, or other security may affect a stay.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask whether the user can satisfy any applicable security or undertaking requirement.]",
@@ -263,7 +252,6 @@
     },
 
     "alternative_relief": {
-      "_note": "Only retain if the jurisdiction provides an alternative to a standard security requirement.",
       "type": "question",
       "phase": "[REPLACE: Phase name]",
       "text": "[REPLACE: Ask whether the user wants information about an alternative form of relief.]",
@@ -284,7 +272,6 @@
     },
 
     "get_help": {
-      "_note": "Generic escalation path when the user's situation cannot safely be resolved by the navigator.",
       "type": "terminal",
       "phase": "[REPLACE: Get Legal Help]",
       "items": [
@@ -306,7 +293,6 @@
     },
 
     "checklist_appeal": {
-      "_note": "Generic terminal checklist demonstrating how a jurisdiction author can convert the decision tree into concrete actions.",
       "type": "terminal",
       "phase": "[REPLACE: Appeal Action Checklist]",
       "items": [
