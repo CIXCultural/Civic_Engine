@@ -149,4 +149,4 @@ Target: all four queries complete in under 2000 ms total on Node 18
 
 This project follows a [Code of Conduct](./CODE_OF_CONDUCT.md). By
 participating, you're expected to uphold it. Report unacceptable behavior
-to [contact email/method].
+to studio@cixcultural.org
