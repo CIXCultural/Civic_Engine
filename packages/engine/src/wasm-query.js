@@ -3,16 +3,49 @@
  *
  * DuckDB manages its own WASM linear memory and worker thread internally.
  * We run it inside our existing Web Worker, so all query execution stays
- * off the main thread. The 5 MB WASM binary is fetched once and cached by
- * the browser's HTTP cache / service worker on subsequent loads.
+ * off the main thread.
+ *
+ * IMPORTANT: this module imports duckdb-wasm from a local, vendored copy
+ * (see /vendor/duckdb-wasm/) rather than a CDN. This is deliberate: Civic
+ * Engine's design goal is zero runtime dependency on third-party
+ * infrastructure — fetching from a CDN at runtime would mean the app is
+ * not actually offline-first on a fresh load, and would leak the fact that
+ * a device is using Civic Engine to a third party (jsDelivr) on every
+ * first use. To update the vendored version, download the release
+ * artifacts from https://github.com/duckdb/duckdb-wasm and replace the
+ * contents of /vendor/duckdb-wasm/.
  *
  * Falls back to the pure-JS path if DuckDB fails to load (old WebKit,
- * locked-down CSP, or no WASM support).
+ * locked-down CSP, no WASM support, or the vendored files are missing).
  */
 
-import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
+import * as duckdb from '../../vendor/duckdb-wasm/duckdb-browser.mjs';
 
-const BUNDLES = duckdb.getJsDelivrBundles();
+// Bundle files are served from the same origin as the app — see
+// /vendor/duckdb-wasm/README.md for how these paths are populated at build time.
+const BUNDLES = {
+  mvp: {
+    mainModule: '/vendor/duckdb-wasm/duckdb-mvp.wasm',
+    mainWorker: '/vendor/duckdb-wasm/duckdb-browser-mvp.worker.js',
+  },
+  eh: {
+    mainModule: '/vendor/duckdb-wasm/duckdb-eh.wasm',
+    mainWorker: '/vendor/duckdb-wasm/duckdb-browser-eh.worker.js',
+  },
+};
+
+// Identifiers (dataset names, column names) must match this pattern before
+// being interpolated into SQL. This is a strict allowlist, not an escape —
+// bundle authors and dataset producers should never need characters outside
+// this set for a table or column name.
+const SAFE_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
+function assertSafeIdentifier(name, label) {
+  if (typeof name !== 'string' || !SAFE_IDENTIFIER.test(name)) {
+    throw new Error(`Invalid ${label}: "${name}". Identifiers must match ${SAFE_IDENTIFIER}.`);
+  }
+  return name;
+}
 
 export class DuckDbQuery {
   constructor() {
@@ -43,9 +76,10 @@ export class DuckDbQuery {
    * @param {Function} onProgress (bytesRead, totalBytes) => void
    */
   async ingest(datasetId, source, onProgress) {
+    assertSafeIdentifier(datasetId, 'datasetId');
+
     if (!this._db) return this._ingestFallback(datasetId, source, onProgress);
 
-    // Stream the file into DuckDB's virtual filesystem, then register as a view.
     const resp = await fetch(source);
     if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${source}`);
     const contentLength = Number(resp.headers.get('content-length') || 0);
@@ -68,11 +102,9 @@ export class DuckDbQuery {
     const filename = `${datasetId}.csv`;
     await this._db.registerFileBuffer(filename, buffer);
 
-    // DuckDB auto-detects CSV vs JSON; CREATE VIEW keeps it lazy (no full scan on ingest)
     const ext = source.toString().endsWith('.ndjson') ? 'read_json_auto' : 'read_csv_auto';
     await this._conn.query(`CREATE OR REPLACE VIEW "${datasetId}" AS SELECT * FROM ${ext}('${filename}')`);
 
-    // Return column names and row count for the caller
     const meta = await this._conn.query(`SELECT COUNT(*) as n FROM "${datasetId}"`);
     const rowCount = Number(meta.toArray()[0].n);
     const cols = await this._conn.query(`DESCRIBE "${datasetId}"`);
@@ -93,10 +125,13 @@ export class DuckDbQuery {
   }
 
   _buildSql({ dataset, columns, filters = [], sort, limit = 500 }) {
-    const cols = columns && columns.length ? columns.map(c => `"${c}"`).join(', ') : '*';
+    assertSafeIdentifier(dataset, 'dataset');
+
+    const safeColumns = (columns || []).map(c => assertSafeIdentifier(c, 'column'));
+    const cols = safeColumns.length ? safeColumns.map(c => `"${c}"`).join(', ') : '*';
 
     const where = filters.map(({ column, op, value, bbox, center }) => {
-      const col = column ? `"${column}"` : null;
+      const col = column ? `"${assertSafeIdentifier(column, 'filter column')}"` : null;
       const val = typeof value === 'number' ? value : `'${String(value ?? '').replace(/'/g, "''")}'`;
 
       if (op === 'eq')       return `${col} = ${val}`;
@@ -108,18 +143,23 @@ export class DuckDbQuery {
       // Geo: bounding box — used for census block / voter registry spatial queries
       // bbox: { latCol, lngCol, minLat, maxLat, minLng, maxLng }
       if (op === 'bbox') {
-        return `"${bbox.latCol}" BETWEEN ${bbox.minLat} AND ${bbox.maxLat} ` +
-               `AND "${bbox.lngCol}" BETWEEN ${bbox.minLng} AND ${bbox.maxLng}`;
+        const latCol = assertSafeIdentifier(bbox.latCol, 'bbox.latCol');
+        const lngCol = assertSafeIdentifier(bbox.lngCol, 'bbox.lngCol');
+        return `"${latCol}" BETWEEN ${Number(bbox.minLat)} AND ${Number(bbox.maxLat)} ` +
+               `AND "${lngCol}" BETWEEN ${Number(bbox.minLng)} AND ${Number(bbox.maxLng)}`;
       }
 
       // Geo: radius — Haversine approximation (accurate to ~0.5% at city scale)
       // center: { latCol, lngCol, lat, lng, km }
       if (op === 'within_km') {
+        const latCol = assertSafeIdentifier(center.latCol, 'center.latCol');
+        const lngCol = assertSafeIdentifier(center.lngCol, 'center.lngCol');
         const R = 6371; // Earth radius km
-        const dLat = `RADIANS("${center.latCol}" - ${center.lat})`;
-        const dLng = `RADIANS("${center.lngCol}" - ${center.lng})`;
-        const a = `POW(SIN(${dLat}/2),2) + COS(RADIANS(${center.lat})) * COS(RADIANS("${center.latCol}")) * POW(SIN(${dLng}/2),2)`;
-        return `${R} * 2 * ASIN(SQRT(${a})) <= ${center.km}`;
+        const lat = Number(center.lat), lng = Number(center.lng), km = Number(center.km);
+        const dLat = `RADIANS("${latCol}" - ${lat})`;
+        const dLng = `RADIANS("${lngCol}" - ${lng})`;
+        const a = `POW(SIN(${dLat}/2),2) + COS(RADIANS(${lat})) * COS(RADIANS("${latCol}")) * POW(SIN(${dLng}/2),2)`;
+        return `${R} * 2 * ASIN(SQRT(${a})) <= ${km}`;
       }
 
       return 'TRUE';
@@ -127,8 +167,8 @@ export class DuckDbQuery {
 
     let sql = `SELECT ${cols} FROM "${dataset}"`;
     if (where.length)  sql += ` WHERE ${where.join(' AND ')}`;
-    if (sort)          sql += ` ORDER BY "${sort.column}" ${sort.dir === 'desc' ? 'DESC' : 'ASC'}`;
-    sql += ` LIMIT ${Number(limit)}`;
+    if (sort)          sql += ` ORDER BY "${assertSafeIdentifier(sort.column, 'sort.column')}" ${sort.dir === 'desc' ? 'DESC' : 'ASC'}`;
+    sql += ` LIMIT ${Number(limit) || 500}`;
     return sql;
   }
 
