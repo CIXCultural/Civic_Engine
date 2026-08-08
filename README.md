@@ -11,7 +11,7 @@ Zero backend. Works offline. Runs multi-column queries in under 2 seconds on leg
 ```
 civic-engine/
 ├── packages/
-│   ├── engine/       ← Web Worker + stream parser + WASM query layer
+│   ├── engine/       ← Web Worker + stream parser + DuckDB-WASM query layer
 │   ├── schema/       ← JSON Schema for rule bundles + validator
 │   └── ui-shell/     ← Generic navigator UI (no framework)
 ├── templates/
@@ -61,14 +61,37 @@ DuckDB-WASM adds vectorised execution on top of this baseline.
 
 Run yourself: `node civic-engine/packages/engine/bench/benchmark.js 200000`
 
-## WASM Status
+## Query Engine and WASM Status
 
-`packages/engine/wasm/` holds the compiled query module.  
-`packages/engine/src/query.wat` is the WAT source — compile with:
+Civic Engine uses DuckDB-WASM for in-browser analytical queries when
+WebAssembly is available. DuckDB-WASM runs inside the engine's Web Worker,
+keeping query execution off the main UI thread.
 
-```
-wat2wasm packages/engine/src/query.wat -o packages/engine/wasm/query.wasm
-```
+The query layer is implemented in:
 
-Until the WASM ABI is wired in `wasm-query.js`, the engine automatically falls back to
-the pure-JS query path with no performance penalty for datasets under ~100k rows.
+`packages/engine/src/wasm-query.js`
+
+The engine also includes a pure-JavaScript fallback for environments where
+DuckDB-WASM cannot be initialized, including browsers with limited WebAssembly
+support or restrictive security policies.
+
+### Current Query Architecture
+
+```text
+Application
+    │
+    ▼
+Civic Engine API
+    │
+    ▼
+Web Worker
+    │
+    ├── RuleEvaluator
+    │
+    ├── StreamParser
+    │
+    └── DuckDbQuery
+            │
+            ├── DuckDB-WASM
+            │
+            └── Pure-JS fallback
