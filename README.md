@@ -4,7 +4,7 @@ In traditional software, building a new app means manufacturing everything from 
 
 By standardizing the application layer, however, Civic Engine does for civic apps what the shipping container did for global trade: it standardizes the packaging so the underlying machinery never has to change.
 
-This produces near-zero cost for engineering, faster upgrade times, and low ongoing maintenance. Primary work lies in the policy or legal research needed to ensure content accuracy.
+This produces cost-efficient engineering, faster upgrade times, and low ongoing maintenance. Primary work lies in the policy or legal research needed to ensure content accuracy.
 
 ---
 ## Positioning & Design Philosophy
