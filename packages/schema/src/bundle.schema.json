@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://civic-engine/bundle.schema.json",
+  "title": "CivicEngineBundle",
+  "description": "Schema for a jurisdiction-specific rule bundle consumed by @civic-engine/engine.",
+  "type": "object",
+  "required": ["version", "domain", "jurisdiction", "entryNode", "nodes"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "SemVer string. Engine warns the user if bundle is >90 days old.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "publishedAt": { "type": "string", "format": "date" },
+    "domain": {
+      "type": "string",
+      "description": "Legal or civic domain identifier (e.g. 'housing-appeals', 'small-claims')."
+    },
+    "jurisdiction": {
+      "type": "string",
+      "description": "BCP-47 region tag or freeform locality (e.g. 'US-NY-NYC', 'US-CA-SF')."
+    },
+    "entryNode": { "type": "string" },
+    "civicData": {
+      "type": "object",
+      "description": "Jurisdiction-specific facts interpolated into checklist items.",
+      "additionalProperties": { "type": "string" }
+    },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/Node" }
+    }
+  },
+  "definitions": {
+    "Node": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["question", "branch", "terminal"] },
+        "phase": { "type": "string" },
+        "effectiveAfter": { "type": "string", "format": "date" },
+        "effectiveBefore": { "type": "string", "format": "date" },
+        "supersedes": { "type": "string", "description": "Node ID this node replaces." },
+        "text": { "type": "string" },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "value"],
+            "properties": {
+              "label": { "type": "string" },
+              "value": { "type": "string" },
+              "setsFlag": { "type": "string" },
+              "next": { "type": "string" }
+            }
+          }
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["when", "next"],
+            "properties": {
+              "when": {},
+              "next": { "type": "string" }
+            }
+          }
+        },
+        "items": {
+          "type": "array",
+          "description": "Checklist items for terminal nodes.",
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "properties": {
+              "text": { "type": "string" },
+              "link": { "type": "string" },
+              "urgent": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
