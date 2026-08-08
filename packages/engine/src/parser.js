@@ -1,4 +1,3 @@
-
 /**
  * StreamParser — pure-JS fallback ingestion.
  *
@@ -636,4 +635,3 @@ export class StreamParser {
     };
   }
 }
-
