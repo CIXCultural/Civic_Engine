@@ -1,4 +1,4 @@
-```javascript
+
 /**
  * StreamParser — pure-JS fallback ingestion.
  *
