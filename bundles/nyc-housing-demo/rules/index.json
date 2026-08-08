@@ -1,0 +1,347 @@
+{
+  "_template": true,
+  "_templateVersion": "1.0.0",
+  "_instructions": "Locale-agnostic starter template for an appeals navigator. Replace every [REPLACE] value with jurisdiction-specific information and remove all underscore-prefixed metadata keys before publishing. This template illustrates questions, date inputs, conditional branches, and terminal checklists. It does not constitute legal advice.",
+
+  "version": "0.1.0",
+  "publishedAt": "[REPLACE: ISO date, e.g. 2026-01-01]",
+  "domain": "appeals",
+  "jurisdiction": "[REPLACE: jurisdiction identifier, e.g. US-NY-NYC]",
+  "language": "[REPLACE: BCP 47 language tag, e.g. en]",
+  "entryNode": "start",
+
+  "civicData": {
+    "jurisdiction_name": "[REPLACE: Human-readable jurisdiction name]",
+    "court_name": "[REPLACE: Name of relevant court]",
+    "court_address": "[REPLACE: Court address]",
+    "court_phone": "[REPLACE: Court phone number]",
+    "appeal_deadline_days": "[REPLACE: Number of days to appeal]",
+    "mail_extension_days": "[REPLACE: Additional days, if applicable]",
+    "legal_aid_name": "[REPLACE: Legal aid organization]",
+    "legal_aid_phone": "[REPLACE: Legal aid phone number]",
+    "legal_aid_url": "[REPLACE: Legal aid website]",
+    "self_help_url": "[REPLACE: Court or government self-help URL]"
+  },
+
+  "nodes": {
+    "start": {
+      "_note": "Entry point. Ask the user which court or locality has jurisdiction over the case.",
+      "type": "question",
+      "phase": "[REPLACE: e.g. 'Phase 1 — Preserve Your Appeal']",
+      "text": "[REPLACE: Ask which court, locality, or division handled the case.]",
+      "options": [
+        {
+          "label": "[REPLACE: Location or court option 1]",
+          "value": "location_1",
+          "setsFlag": "location",
+          "next": "judgment_notice"
+        },
+        {
+          "label": "[REPLACE: Location or court option 2]",
+          "value": "location_2",
+          "setsFlag": "location",
+          "next": "judgment_notice"
+        },
+        {
+          "label": "[REPLACE: Location or court option 3]",
+          "value": "location_3",
+          "setsFlag": "location",
+          "next": "judgment_notice"
+        }
+      ]
+    },
+
+    "judgment_notice": {
+      "_note": "Determine whether the user has received formal notice of the judgment or order.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask whether formal notice of the judgment or order has been served.]",
+      "options": [
+        {
+          "label": "[REPLACE: Yes — I received formal notice]",
+          "value": "yes",
+          "setsFlag": "noticeServed",
+          "next": "notice_date"
+        },
+        {
+          "label": "[REPLACE: No / I am not sure]",
+          "value": "no",
+          "setsFlag": "noticeServed",
+          "next": "post_judgment_motion"
+        }
+      ]
+    },
+
+    "notice_date": {
+      "_note": "Date input demonstrates how an author can collect a date that may affect a later deadline calculation.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask for the date formal notice was served.]",
+      "inputType": "date",
+      "flagName": "noticeDate",
+      "next": "service_method"
+    },
+
+    "service_method": {
+      "_note": "Determine whether service occurred by a method that changes the applicable deadline.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask how the notice was served.]",
+      "options": [
+        {
+          "label": "[REPLACE: Served by mail]",
+          "value": "mail",
+          "setsFlag": "serviceMethod",
+          "next": "deadline_check"
+        },
+        {
+          "label": "[REPLACE: Served in person]",
+          "value": "personal",
+          "setsFlag": "serviceMethod",
+          "next": "deadline_check"
+        },
+        {
+          "label": "[REPLACE: Another method]",
+          "value": "other",
+          "setsFlag": "serviceMethod",
+          "next": "deadline_check"
+        }
+      ]
+    },
+
+    "deadline_check": {
+      "_note": "Example branch node. The host application or bundle-specific logic must establish deadlineExpired before this node is reached.",
+      "type": "branch",
+      "conditions": [
+        {
+          "when": {
+            "flag": "deadlineExpired",
+            "truthy": true
+          },
+          "next": "deadline_expired"
+        },
+        {
+          "when": null,
+          "next": "post_judgment_motion"
+        }
+      ]
+    },
+
+    "deadline_expired": {
+      "_note": "Generic expired-deadline outcome. Replace with the actual jurisdiction-specific remedy.",
+      "type": "terminal",
+      "phase": "[REPLACE: Deadline has passed]",
+      "items": [
+        {
+          "text": "[REPLACE: Explain what happens when the ordinary appeal deadline has expired and identify any available late-appeal or extension procedure.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: Direct the user to qualified legal assistance.]",
+          "urgent": true,
+          "link": "tel:{{legal_aid_phone}}"
+        },
+        {
+          "text": "[REPLACE: Provide the official court or government resource for late appeals.]",
+          "urgent": false,
+          "link": "{{self_help_url}}"
+        }
+      ]
+    },
+
+    "post_judgment_motion": {
+      "_note": "Determine whether another post-judgment proceeding may affect the appeal path.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask whether the user has filed or is considering a post-judgment motion.]",
+      "options": [
+        {
+          "label": "[REPLACE: Yes — I have a pending motion]",
+          "value": "yes",
+          "setsFlag": "motionPending",
+          "next": "motion_type"
+        },
+        {
+          "label": "[REPLACE: No]",
+          "value": "no",
+          "setsFlag": "motionPending",
+          "next": "stay_question"
+        },
+        {
+          "label": "[REPLACE: I am not sure]",
+          "value": "unknown",
+          "setsFlag": "motionPending",
+          "next": "get_help"
+        }
+      ]
+    },
+
+    "motion_type": {
+      "_note": "Generic motion-type example. Replace options with the motions recognized in the target jurisdiction.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask what type of post-judgment motion was filed.]",
+      "options": [
+        {
+          "label": "[REPLACE: Motion type 1]",
+          "value": "motion_type_1",
+          "setsFlag": "motionType",
+          "next": "motion_warning"
+        },
+        {
+          "label": "[REPLACE: Motion type 2]",
+          "value": "motion_type_2",
+          "setsFlag": "motionType",
+          "next": "motion_warning"
+        },
+        {
+          "label": "[REPLACE: Motion type 3]",
+          "value": "motion_type_3",
+          "setsFlag": "motionType",
+          "next": "stay_question"
+        }
+      ]
+    },
+
+    "motion_warning": {
+      "_note": "Illustrates a jurisdiction-specific procedural warning that should only be retained if legally accurate.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Explain any procedural consequence of the selected motion and ask the user to acknowledge it.]",
+      "options": [
+        {
+          "label": "[REPLACE: Yes — I understand]",
+          "value": "yes",
+          "setsFlag": "proceduralWarningAcknowledged",
+          "next": "stay_question"
+        }
+      ]
+    },
+
+    "stay_question": {
+      "_note": "Determine whether the user needs relief preventing enforcement while the appeal is pending.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask whether the user needs a stay or other interim relief while the appeal is pending.]",
+      "options": [
+        {
+          "label": "[REPLACE: Yes]",
+          "value": "yes",
+          "setsFlag": "seekingStay",
+          "next": "security_question"
+        },
+        {
+          "label": "[REPLACE: No]",
+          "value": "no",
+          "setsFlag": "seekingStay",
+          "next": "checklist_appeal"
+        }
+      ]
+    },
+
+    "security_question": {
+      "_note": "Generic example for jurisdictions where a bond, undertaking, deposit, or other security may affect a stay.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask whether the user can satisfy any applicable security or undertaking requirement.]",
+      "options": [
+        {
+          "label": "[REPLACE: Yes — I can satisfy the requirement]",
+          "value": "yes",
+          "setsFlag": "canProvideSecurity",
+          "next": "checklist_appeal"
+        },
+        {
+          "label": "[REPLACE: No — I need an alternative]",
+          "value": "no",
+          "setsFlag": "canProvideSecurity",
+          "next": "alternative_relief"
+        },
+        {
+          "label": "[REPLACE: I do not know]",
+          "value": "unknown",
+          "setsFlag": "canProvideSecurity",
+          "next": "get_help"
+        }
+      ]
+    },
+
+    "alternative_relief": {
+      "_note": "Only retain if the jurisdiction provides an alternative to a standard security requirement.",
+      "type": "question",
+      "phase": "[REPLACE: Phase name]",
+      "text": "[REPLACE: Ask whether the user wants information about an alternative form of relief.]",
+      "options": [
+        {
+          "label": "[REPLACE: Yes]",
+          "value": "yes",
+          "setsFlag": "alternativeRelief",
+          "next": "checklist_appeal"
+        },
+        {
+          "label": "[REPLACE: No]",
+          "value": "no",
+          "setsFlag": "alternativeRelief",
+          "next": "checklist_appeal"
+        }
+      ]
+    },
+
+    "get_help": {
+      "_note": "Generic escalation path when the user's situation cannot safely be resolved by the navigator.",
+      "type": "terminal",
+      "phase": "[REPLACE: Get Legal Help]",
+      "items": [
+        {
+          "text": "[REPLACE: Explain why the situation requires individualized legal assistance.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: Contact {{legal_aid_name}} at {{legal_aid_phone}} for assistance.]",
+          "urgent": true,
+          "link": "tel:{{legal_aid_phone}}"
+        },
+        {
+          "text": "[REPLACE: Official court or self-help resources: {{self_help_url}}]",
+          "urgent": false,
+          "link": "{{self_help_url}}"
+        }
+      ]
+    },
+
+    "checklist_appeal": {
+      "_note": "Generic terminal checklist demonstrating how a jurisdiction author can convert the decision tree into concrete actions.",
+      "type": "terminal",
+      "phase": "[REPLACE: Appeal Action Checklist]",
+      "items": [
+        {
+          "text": "[REPLACE: File the required notice or initiating document with {{court_name}} before the applicable deadline.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: Serve the required parties according to the jurisdiction's service rules.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: Request the record, transcript, or other materials required for the appeal.]",
+          "urgent": true,
+          "link": "{{self_help_url}}"
+        },
+        {
+          "text": "[REPLACE: If you are seeking a stay, file the required stay application and supporting papers.]",
+          "urgent": true
+        },
+        {
+          "text": "[REPLACE: Keep copies of every filing, proof of service, receipt, and court order.]",
+          "urgent": false
+        },
+        {
+          "text": "[REPLACE: Contact {{legal_aid_name}} for assistance if you need help understanding or completing the process.]",
+          "urgent": true,
+          "link": "tel:{{legal_aid_phone}}"
+        }
+      ]
+    }
+  }
+}
+```
