@@ -212,19 +212,6 @@ domain for demonstration purposes. CourtMotion (the production app in `/api` and
 Benchmark figures below measure the pure-JS query path (the same path DuckDB-WASM falls back to when unavailable). 
 DuckDB-WASM benchmarks have not yet been separately measured — see [issue/TODO].
 
-Measured on Node 22 (conservative proxy for a mid-range 2019 smartphone browser).
-Dataset: 200,000 rows, 12.2 MB CSV (synthetic census/voter registry scale).
-
-| Operation | Time | Rows returned |
-|---|---|---|
-| Stream parse + columnar ingest | 706 ms | 200,000 |
-| Single-column filter (`borough = Brooklyn`) | 4 ms | 40,000 |
-| Multi-column filter + sort (`income > 60k AND pop > 1000`) | 64 ms | 500 |
-| Geo bounding-box (midtown Manhattan ~4 km²) | 6 ms | 481 |
-
-All four queries complete in **780 ms total** on a 12 MB file — well under the 2-second target.
-DuckDB-WASM adds vectorised execution on top of this baseline.
-
 Run yourself: `node civic-engine/packages/engine/bench/benchmark.js 200000`
 
 ## Query Engine and WASM Status
