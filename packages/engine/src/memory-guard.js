@@ -12,12 +12,12 @@
  * IMPORTANT — what this does and does not guarantee:
  * This is a best-effort mitigation, not a cryptographic or forensic
  * guarantee. JavaScript strings are immutable: "overwriting" a string
- * creates a new string and reassigns the reference — it does not
+ * creates a new string and reassigns the reference, but it does not
  * physically overwrite the original data in memory. Engine-level copies
  * (JIT compilation, string interning, GC compaction) may leave residual
  * data in memory this code has no access to, and garbage collection timing
  * is not controllable from application code. This reduces the window and
- * surface area of exposure (data is no longer reachable from app state,
+ * surface area of exposure (so data is no longer reachable from app state,
  * localStorage is cleared, workers are torn down) but it does not defeat
  * a determined attacker with memory-inspection access to the device.
  *
