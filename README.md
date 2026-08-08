@@ -214,7 +214,6 @@ DuckDB-WASM benchmarks have not yet been separately measured — see [issue/TODO
 
 Run yourself: `node civic-engine/packages/engine/bench/benchmark.js`
 
-## Query Engine and WASM Status
 
 ## Query Engine and WASM Status
 
