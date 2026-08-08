@@ -134,12 +134,12 @@ The architecture therefore separates the reusable runtime from the jurisdiction-
               │ Bundle validation   │
               └──────────┬──────────┘
                          │
-              ┌──────────▼──────────┐
-              │       BUNDLE        │
+              ┌──────────▼───────────┐
+              │       BUNDLE         │
               │ Domain + jurisdiction│
-              │ + decision tree     │
-              │ + civic data        │
-              └─────────────────────┘
+              │ + decision tree      │
+              │ + civic data         │
+              └──────────────────────┘
 ```
 
 The result is an infrastructure model in which **software provides the execution layer while civic organizations and domain experts can provide the jurisdiction-specific decision content**.
