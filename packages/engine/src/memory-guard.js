@@ -490,4 +490,4 @@ export class MemoryGuard {
     this._callbacks.length = 0;
   }
 }
-```
+
