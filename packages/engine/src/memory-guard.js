@@ -85,8 +85,8 @@ export class MemoryGuard {
   }
 
   /**
-   * Recursively overwrite all string and array values with zero equivalents
-   * before nulling the reference, defeating garbage-collector timing attacks.
+   * Best-effort in-memory clearing: overwrites tracked values and drops references so purged data is no longer reachable from application state. 
+   * This reduces exposure but, like any JS-based memory clearing, cannot guarantee the underlying memory is physically overwritten at the engine or OS level.
    */
   _zeroFill(obj) {
     if (!obj || typeof obj !== 'object') return;
