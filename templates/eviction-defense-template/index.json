@@ -1,7 +1,7 @@
 {
   "_template": true,
   "_templateVersion": "1.0.0",
-  "_instructions": "This is a locale-agnostic starter template for an eviction/tenancy defense navigator. Fork this file, replace every value marked with [REPLACE] with your jurisdiction's actual information, and remove all '_' prefixed keys before publishing. See README.md for a full authoring guide.",
+  "_instructions": "This is a locale-agnostic starter template for an eviction/tenancy defense navigator. Fork this file, replace every value marked with [REPLACE] with your jurisdiction's actual information, and remove all '_' prefixed keys before publishing. This template's suggested defenses (habitability, retaliation) are common in many jurisdictions but are not universal. Before publishing, it might be helpful to have a licensed attorney or legal aid organization in your jurisdiction confirm which defenses apply, and remove any _note-guided sections that don't. See README.md for a full authoring guide.",
 
   "version": "0.1.0",
   "publishedAt": "[REPLACE: ISO date, e.g. 2026-01-01]",
