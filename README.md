@@ -212,7 +212,7 @@ domain for demonstration purposes. CourtMotion (the production app in `/api` and
 Benchmark figures below measure the pure-JS query path (the same path DuckDB-WASM falls back to when unavailable). 
 DuckDB-WASM benchmarks have not yet been separately measured — see [issue/TODO].
 
-Run yourself: `node civic-engine/packages/engine/bench/benchmark.js 200000`
+Run yourself: `node civic-engine/packages/engine/bench/benchmark.js`
 
 ## Query Engine and WASM Status
 
