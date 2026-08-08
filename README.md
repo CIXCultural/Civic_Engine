@@ -1,8 +1,10 @@
 # Civic Engine
 
-Civic rules are typically trapped in documents, websites, and custom applications. Civic Engine separates policy logic from application code by representing civic knowledge as portable, versioned rule bundles that can run across jurisdictions. It provides a local-first runtime for executable civic knowledge and legal logic.
+In traditional software, building a new app means manufacturing everything from scratch. This often creates waste because it compels engineers to rewrite the same question components, the same back-button logic, the same layout styles, and the same server hosting infrastructure over and over.
 
-Zero backend. Works offline. Runs multi-column queries in under 2 seconds on legacy hardware.
+By standardizing the application layer, however, Civic Engine does for civic apps what the shipping container did for global trade: it standardizes the packaging so the underlying machinery never has to change.
+
+This produces near-zero cost for engineering, faster upgrade times, and low ongoing maintenance. Primary work lies in the policy or legal research needed to ensure content accuracy.
 
 ---
 ## Positioning & Design Philosophy
