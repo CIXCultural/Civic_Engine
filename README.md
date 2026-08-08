@@ -5,6 +5,146 @@ Civic rules are typically trapped in documents, websites, and custom application
 Zero backend. Works offline. Runs multi-column queries in under 2 seconds on legacy hardware.
 
 ---
+## Positioning & Design Philosophy
+
+### 1. The Challenge: Translating Civic Rules into Software
+
+Civic regulations, administrative procedures, eligibility rules, and legal workflows change frequently and vary across jurisdictions. In conventional applications, these rules are often embedded directly in application code, meaning that a policy change can require a software-engineering change.
+
+Civic Engine addresses this problem by separating **civic decision logic from application code**.
+
+Jurisdiction- and domain-specific rules are represented as structured, declarative bundles that conform to a common schema. The engine interprets those bundles at runtime, while the UI shell provides a reusable interaction layer.
+
+This creates a separation between:
+
+* **Infrastructure** — the engine, schema, worker, query layer, and UI shell
+* **Civic knowledge** — jurisdiction-specific rules, data, questions, and actions
+* **Presentation** — the interface through which residents interact with the navigator
+
+As a result, a new civic application can generally be created by authoring a new bundle rather than rewriting the underlying application.
+
+### 2. Ecosystem Positioning
+
+Civic Engine is part of the broader **Rules as Code (RaC)** and public-interest technology ecosystem. It is complementary to existing frameworks rather than intended to replace them.
+
+Different RaC systems optimize for different outputs:
+
+| System           | Primary orientation                                                          |
+| ---------------- | ---------------------------------------------------------------------------- |
+| **Docassemble**  | Guided interviews and document/form assembly                                 |
+| **OpenFisca**    | Programmatic policy, tax, and social-benefit calculations                    |
+| **Blawx**        | Formal legal rules and logic-based reasoning                                 |
+| **Civic Engine** | Navigational civic journeys resulting in personalized actions and checklists |
+
+The distinction is therefore primarily one of **application architecture and intended output**.
+
+Civic Engine is designed for situations where the desired outcome is not necessarily a generated legal document or a numerical eligibility calculation, but rather:
+
+> **“Given my situation and jurisdiction, what should I do next?”**
+
+A Civic Engine application models that journey as a declarative decision tree whose terminal states can provide actions, deadlines, resources, warnings, and jurisdiction-specific links.
+
+### 3. Data-First Design
+
+Civic Engine uses a **data-first, declarative approach** to civic decision logic.
+
+Instead of embedding every question and rule in application code, authors define:
+
+* questions
+* possible answers
+* flags
+* branching conditions
+* effective dates
+* jurisdictional data
+* terminal actions and checklists
+
+The engine provides the runtime required to interpret those definitions.
+
+#### Advantages
+
+**Maintainability**
+
+Changes to jurisdiction-specific questions, text, routing, deadlines, and civic resources can often be made in a bundle without modifying the engine itself.
+
+**Portability**
+
+The same engine and UI shell can support substantially different civic applications by loading different bundles.
+
+For example, the runtime could support:
+
+* a housing navigator in New York
+* a business-license navigator in another jurisdiction
+* a benefits navigator
+* a court-procedure navigator
+
+without requiring the core engine to be rewritten for each use case.
+
+**Author accessibility**
+
+The bundle format is designed so that people who understand the relevant civic domain can author or maintain a bundle without needing to understand the implementation of the runtime.
+
+This does **not** eliminate the need for domain expertise. Legal and policy content should still be reviewed by appropriately qualified subject-matter experts before publication.
+
+**Separation of concerns**
+
+The engine does not need to know the substantive law of a particular jurisdiction. It executes the structure supplied by the bundle.
+
+### 4. Design Trade-offs
+
+Civic Engine deliberately favors **simplicity, portability, and authorability** over unrestricted computational expressiveness.
+
+| Data-first declarative model                               | Code-first model                                            |
+| ---------------------------------------------------------- | ----------------------------------------------------------- |
+| Easier to inspect and validate                             | Greater programming flexibility                             |
+| Rules can be changed independently of runtime code         | Complex calculations and edge cases are easier to implement |
+| Portable across applications                               | Can integrate arbitrary libraries and services              |
+| Accessible to non-engineering authors                      | Requires engineering expertise for changes                  |
+| Strong separation between civic content and infrastructure | Logic and implementation can be tightly integrated          |
+
+The trade-off is intentional.
+
+A declarative decision-tree schema is well suited to navigational civic workflows, but it is not intended to replace general-purpose programming or specialized policy-simulation systems.
+
+Where a civic application requires complex calculations, external integrations, or domain-specific computation, those capabilities can be provided by the surrounding application architecture while the Civic Engine remains responsible for the navigational decision layer.
+
+### 5. The Core Abstraction
+
+The central design principle is:
+
+> **Create a new civic application by authoring a bundle—not by rewriting the engine.**
+
+The architecture therefore separates the reusable runtime from the jurisdiction-specific knowledge it executes:
+
+```text
+                    CIVIC ENGINE
+
+              ┌─────────────────────┐
+              │      UI SHELL       │
+              │  Generic interface  │
+              └──────────┬──────────┘
+                         │
+              ┌──────────▼──────────┐
+              │       ENGINE        │
+              │ Rule evaluation +   │
+              │ worker/query layer  │
+              └──────────┬──────────┘
+                         │
+              ┌──────────▼──────────┐
+              │       SCHEMA        │
+              │ Bundle validation   │
+              └──────────┬──────────┘
+                         │
+              ┌──────────▼──────────┐
+              │       BUNDLE        │
+              │ Domain + jurisdiction│
+              │ + decision tree     │
+              │ + civic data        │
+              └─────────────────────┘
+```
+
+The result is an infrastructure model in which **software provides the execution layer while civic organizations and domain experts can provide the jurisdiction-specific decision content**.
+
+---
 
 ## Architecture
 
