@@ -20,7 +20,7 @@ Its architecture separates:
 
 ## 2. Ownership
 
-Civic Engine is an open-source project owned and maintained by **Ingenio CIX / CIX Cultural**.
+Civic Engine is an open-source project owned and maintained by **CIX Cultural**.
 
 The project source code is publicly available under the MIT License.
 
