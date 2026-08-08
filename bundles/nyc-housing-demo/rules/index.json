@@ -1,8 +1,4 @@
 {
-  "_template": true,
-  "_templateVersion": "1.0.0",
-  "_instructions": "Locale-agnostic starter template for an appeals navigator. Replace every [REPLACE] value with jurisdiction-specific information and remove all underscore-prefixed metadata keys before publishing. This template illustrates questions, date inputs, conditional branches, and terminal checklists. It does not constitute legal advice.",
-
   "version": "0.1.0",
   "publishedAt": "[REPLACE: ISO date, e.g. 2026-01-01]",
   "domain": "appeals",
