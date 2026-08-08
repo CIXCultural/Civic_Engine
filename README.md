@@ -14,10 +14,10 @@ civic-engine/
 │   ├── engine/       ← Web Worker + stream parser + WASM query layer
 │   ├── schema/       ← JSON Schema for rule bundles + validator
 │   └── ui-shell/     ← Generic navigator UI (no framework)
-├── bundles/
-│   └── nyc-housing-demo/   ← NYC Housing Court appeals (white-label demo)
-│       ├── rules/index.json   ← Declarative decision tree
-│       └── data/courts.json   ← Jurisdiction civic data
+├── templates/
+│   └── eviction-defense-template/   ← White-label demo
+│       ├── index.json   ← Declarative decision tree
+│       └── README.md    ← Bundle authoring instructions
 └── examples/
     └── housing-navigator/  ← Working demo page
 ```
