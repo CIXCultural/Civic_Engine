@@ -143,6 +143,16 @@ node packages/engine/bench/benchmark.js 200000
 Target: all four queries complete in under 2000 ms total on Node 18
 (a conservative proxy for a mid-range 2019 smartphone browser).
 
+**Known gap, open to contributors:** the WASM query ABI
+(`packages/engine/wasm/`) is compiled but not yet wired into
+`wasm-query.js` — see the WASM Status section in the README. The engine
+currently falls back to the pure-JS query path with no performance
+penalty under ~100k rows, so this isn't urgent for typical bundle sizes,
+but wiring it in would meaningfully improve performance on larger
+datasets (200k+ rows). If you're comfortable with WASM/WAT, this is a
+well-scoped place to start.
+
+
 ---
 
 ## Code of Conduct
