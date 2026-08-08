@@ -18,6 +18,10 @@ civic-engine/
 │   └── eviction-defense-template/   ← White-label demo
 │       ├── index.json   ← Declarative decision tree
 │       └── README.md    ← Bundle authoring instructions
+├── bundles/
+│   └── nyc-housing-demo/   ← White-label demo
+│       ├── index.json   ← Declarative decision tree
+│       └── README.md    ← Bundle authoring instructions
 └── examples/
     └── housing-navigator/  ← Working demo page
 ```
