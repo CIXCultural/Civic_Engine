@@ -1,4 +1,3 @@
-
 /**
  * RuleEvaluator — traverses a declarative decision tree.
  *
@@ -459,4 +458,3 @@ export class RuleEvaluator {
     return sanitized;
   }
 }
-```
