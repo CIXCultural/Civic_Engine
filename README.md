@@ -182,6 +182,8 @@ civic-engine/
 ├── SECURITY.md
 ├── GOVERNANCE.md
 ├── LICENSE
+├── CODE_OF_CONDUCT.md
+├── HISTORY.md
 └── README.md
 ```
 
