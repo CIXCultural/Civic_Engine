@@ -6,7 +6,9 @@ The format follows the principles of
 [Keep a Changelog](https://keepachangelog.com/), and versions follow
 Semantic Versioning.
 
-## Released August 13, 2026
+## Released 
+
+## [1.1.1] - 2026-08-13
 
 ### Added
 
