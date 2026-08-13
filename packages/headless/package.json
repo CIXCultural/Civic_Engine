@@ -1,0 +1,10 @@
+{
+  "name": "@civic-engine/headless",
+  "version": "1.0.0",
+  "description": "Pure state controller for Civic Engine. Manage navigation and session state without UI markup.",
+  "main": "src/index.js",
+  "private": true,
+  "dependencies": {
+    "@civic-engine/engine": "workspace:*"
+  }
+}
